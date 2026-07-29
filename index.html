@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Táctico AR</title>
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <title>Radar Táctico Integrado</title>
     <style>
         :root {
             --bg-color: #050b14;
             --primary-color: #00ff66;
             --secondary-color: #00bfff;
-            --panel-bg: rgba(5, 11, 20, 0.85);
+            --panel-bg: rgba(5, 11, 20, 0.9);
         }
 
         * {
@@ -30,16 +29,16 @@
             align-items: center;
             justify-content: space-between;
             overflow: hidden;
-            padding: 15px;
+            padding: 20px;
         }
 
         header {
             text-align: center;
-            z-index: 10;
+            margin-top: 10px;
         }
 
         h1 {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             letter-spacing: 2px;
             text-transform: uppercase;
             text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
@@ -48,66 +47,96 @@
         .status-bar {
             font-size: 0.75rem;
             color: #88c0d0;
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
-        /* Contenedor del Radar a pantalla completa */
-        .ar-fullscreen-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            cursor: pointer;
-        }
-
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            background-color: transparent;
-        }
-
-        /* Botón discreto de Realidad Aumentada nativa */
-        #ar-button {
-            background: var(--secondary-color);
-            color: #050b14;
-            border-radius: 20px;
-            border: none;
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            padding: 8px 14px;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-            font-size: 0.75rem;
-            box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        /* Panel HUD inferior flotante */
-        .hud-panel {
+        /* --- RADAR HOLOGRÁFICO CENTRAL INTERACTIVO --- */
+        .radar-wrapper {
             position: relative;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            background: radial-gradient(circle, #001a09 0%, #03070c 80%);
+            border: 4px solid #1a3a2a;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.2), inset 0 0 20px rgba(0, 255, 102, 0.2);
+            margin: auto 0;
+            transition: all 0.3s ease;
+        }
+
+        .radar-wrapper:active {
+            transform: scale(0.97);
+        }
+
+        /* Anillos concéntricos del radar */
+        .ring {
+            position: absolute;
+            border: 1px dashed rgba(0, 255, 102, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .ring-1 { width: 80%; height: 80%; }
+        .ring-2 { width: 55%; height: 55%; border-color: rgba(0, 191, 255, 0.4); }
+        .ring-3 { width: 30%; height: 30%; border-style: solid; border-color: rgba(0, 255, 102, 0.6); }
+
+        /* Cruz central */
+        .crosshair-h {
+            position: absolute;
             width: 100%;
-            max-width: 340px;
-            background: var(--panel-bg);
-            border: 1px solid rgba(0, 255, 102, 0.4);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            height: 1px;
+            background: rgba(0, 255, 102, 0.2);
+            pointer-events: none;
+        }
+        .crosshair-v {
+            position: absolute;
+            width: 1px;
+            height: 100%;
+            background: rgba(0, 255, 102, 0.2);
+            pointer-events: none;
+        }
+
+        /* Haz de luz de escaneo que gira */
+        .scanner-beam {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg at 50% 50%, rgba(0, 255, 102, 0.4) 0deg, transparent 60deg, transparent 360deg);
+            pointer-events: none;
+            display: none;
+        }
+
+        .radar-wrapper.active .scanner-beam {
+            display: block;
+            animation: rotate-beam 2s infinite linear;
+        }
+
+        @keyframes rotate-beam {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- CONTENIDO INTERIOR DEL RADAR (Textos y Barra) --- */
+        .radar-content {
+            position: relative;
             z-index: 10;
-            backdrop-filter: blur(4px);
-            margin-bottom: 10px;
+            text-align: center;
+            padding: 15px;
+            width: 85%;
             pointer-events: none;
         }
 
         #status-text {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: bold;
             letter-spacing: 1px;
-            min-height: 35px;
+            color: var(--primary-color);
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+            margin-bottom: 10px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -118,23 +147,6 @@
             animation: dots 1.5s steps(4, end) infinite;
         }
 
-        .progress-bar-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            margin-top: 10px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--primary-color);
-            transition: width 0.2s linear;
-        }
-
         @keyframes dots {
             0% { content: ''; }
             25% { content: '.'; }
@@ -142,12 +154,38 @@
             75% { content: '...'; }
         }
 
+        /* Barra de progreso integrada dentro del radar */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--secondary-color);
+            box-shadow: 0 0 8px var(--secondary-color);
+            transition: width 0.2s linear;
+        }
+
+        footer {
+            font-size: 0.7rem;
+            color: #557766;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
         .pulse-text {
             animation: text-pulse 1s infinite alternate;
         }
 
         @keyframes text-pulse {
-            from { opacity: 0.6; }
+            from { opacity: 0.5; }
             to { opacity: 1; text-shadow: 0 0 10px var(--secondary-color); }
         }
     </style>
@@ -155,53 +193,48 @@
 <body>
 
     <header>
-        <h1>Radar Táctico AR</h1>
+        <h1>Radar Táctico</h1>
         <div class="status-bar" id="system-state">SISTEMA EN ESPERA</div>
     </header>
 
-    <!-- Visor 3D con forma de objeto tecnológico de prueba -->
-    <div class="ar-fullscreen-container" id="radarTrigger">
-        <model-viewer 
-            id="radarModel"
-            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
-            ar 
-            ar-modes="webxr scene-viewer quick-look" 
-            camera-controls 
-            auto-rotate 
-            shadow-intensity="1">
-            <button slot="ar-button" id="ar-button">
-                📦 Ver en RA
-            </button>
-        </model-viewer>
-    </div>
+    <!-- Radar Central Interactivo -->
+    <div class="radar-wrapper" id="radarTrigger" onclick="startRadarSequence()">
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="scanner-beam"></div>
 
-    <!-- Panel HUD inferior flotante -->
-    <div class="hud-panel">
-        <div id="status-text" class="pulse-text">Toca el radar para activar</div>
-        <div class="progress-bar-container" id="progressContainer">
-            <div class="progress-bar" id="progressBar"></div>
+        <!-- Textos y barra de progreso integrados en el corazón del radar -->
+        <div class="radar-content">
+            <div id="status-text" class="pulse-text">Toca para activar</div>
+            <div class="progress-bar-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
         </div>
     </div>
+
+    <footer>ESTACIÓN TÁCTICA V.3.0</footer>
 
     <script>
         let isRunning = false;
         let timers = [];
 
-        // Activar secuencia al tocar la pantalla
-        document.getElementById('radarTrigger').addEventListener('click', function(e) {
-            if (e.target.id === 'ar-button') return;
-            startRadarSequence();
-        });
-
         function startRadarSequence() {
             if (isRunning) return;
             isRunning = true;
 
+            const radar = document.getElementById('radarTrigger');
             const statusText = document.getElementById('status-text');
             const systemState = document.getElementById('system-state');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
 
+            // Activar animación de giro del radar
+            radar.classList.add('active');
+
+            // 0s - Inicio
             statusText.className = "pulse-text";
             statusText.style.color = "var(--secondary-color)";
             statusText.textContent = "Escaneando sector...";
@@ -213,6 +246,7 @@
             progressBar.style.transition = "width 8s linear";
             setTimeout(() => { progressBar.style.width = "100%"; }, 50);
 
+            // 3s - Detectando
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text loading-dots";
                 statusText.style.color = "var(--primary-color)";
@@ -220,6 +254,7 @@
                 systemState.textContent = "ESTADO: OBJETIVO LOCALIZADO";
             }, 3000));
 
+            // 5s - Midiendo
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text";
                 statusText.style.color = "var(--secondary-color)";
@@ -227,6 +262,7 @@
                 systemState.textContent = "ESTADO: ANÁLISIS ESPECTRAL";
             }, 5000));
 
+            // 8s - Transmitiendo
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text";
                 statusText.style.color = "#ffcc00";
@@ -234,10 +270,12 @@
                 systemState.textContent = "ESTADO: TRANSMISIÓN SEGURO";
             }, 8000));
 
+            // 10.5s - Fin
             timers.push(setTimeout(() => {
+                radar.classList.remove('active');
                 statusText.className = "";
                 statusText.style.color = "var(--primary-color)";
-                statusText.textContent = "¡Transmisión Completa! Toca para reiniciar.";
+                statusText.textContent = "¡Transmisión Completa!";
                 systemState.textContent = "ESTADO: REPOSO";
                 progressContainer.style.display = "none";
                 progressBar.style.transition = "none";
