@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Táctico AR - Interactivo</title>
+    <title>Radar Táctico AR</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         :root {
@@ -24,18 +24,18 @@
         body {
             background-color: var(--bg-color);
             color: var(--primary-color);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            overflow-x: hidden;
+            overflow: hidden;
             padding: 15px;
         }
 
         header {
             text-align: center;
-            margin-top: 5px;
+            z-index: 10;
         }
 
         h1 {
@@ -51,18 +51,14 @@
             margin-top: 3px;
         }
 
-        /* Contenedor Principal del Radar 3D */
-        .ar-viewer-container {
+        /* Contenedor del Radar a pantalla completa */
+        .ar-fullscreen-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 340px;
-            height: 320px;
-            margin: auto 0;
-            position: relative;
-            border: 2px solid rgba(0, 255, 102, 0.4);
-            border-radius: 12px;
-            background: radial-gradient(circle, #002211 0%, #050b14 90%);
-            box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
-            overflow: hidden;
+            height: 100%;
+            z-index: 1;
             cursor: pointer;
         }
 
@@ -72,15 +68,15 @@
             background-color: transparent;
         }
 
-        /* Botón AR nativo flotante en una esquina para pasar a Realidad Aumentada */
+        /* Botón discreto de Realidad Aumentada nativa */
         #ar-button {
             background: var(--secondary-color);
             color: #050b14;
             border-radius: 20px;
             border: none;
             position: absolute;
-            bottom: 12px;
-            right: 12px;
+            top: 70px;
+            right: 20px;
             padding: 8px 14px;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
@@ -90,17 +86,21 @@
             z-index: 10;
         }
 
-        /* Panel de Terminal inferior */
-        .terminal-panel {
+        /* Panel HUD inferior flotante */
+        .hud-panel {
+            position: relative;
             width: 100%;
             max-width: 340px;
             background: var(--panel-bg);
-            border: 1px solid rgba(0, 255, 102, 0.3);
+            border: 1px solid rgba(0, 255, 102, 0.4);
             border-radius: 8px;
             padding: 15px;
             text-align: center;
-            box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            z-index: 10;
+            backdrop-filter: blur(4px);
             margin-bottom: 10px;
+            pointer-events: none;
         }
 
         #status-text {
@@ -159,8 +159,8 @@
         <div class="status-bar" id="system-state">SISTEMA EN ESPERA</div>
     </header>
 
-    <!-- Visor 3D: Al hacer clic en él se activa la secuencia -->
-    <div class="ar-viewer-container" id="radarTrigger">
+    <!-- Visor 3D con forma de objeto tecnológico de prueba -->
+    <div class="ar-fullscreen-container" id="radarTrigger">
         <model-viewer 
             id="radarModel"
             src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
@@ -170,13 +170,13 @@
             auto-rotate 
             shadow-intensity="1">
             <button slot="ar-button" id="ar-button">
-                📦 Ver en Realidad Aumentada
+                📦 Ver en RA
             </button>
         </model-viewer>
     </div>
 
-    <!-- Panel de Terminal con los Mensajes -->
-    <div class="terminal-panel">
+    <!-- Panel HUD inferior flotante -->
+    <div class="hud-panel">
         <div id="status-text" class="pulse-text">Toca el radar para activar</div>
         <div class="progress-bar-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
@@ -187,9 +187,8 @@
         let isRunning = false;
         let timers = [];
 
-        // Vincular el toque en el visor 3D para activar la secuencia
+        // Activar secuencia al tocar la pantalla
         document.getElementById('radarTrigger').addEventListener('click', function(e) {
-            // Evitamos que salte si hacen clic específicamente en el botón pequeño de RA de la esquina
             if (e.target.id === 'ar-button') return;
             startRadarSequence();
         });
@@ -203,7 +202,6 @@
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
 
-            // 1. INICIO (0s)
             statusText.className = "pulse-text";
             statusText.style.color = "var(--secondary-color)";
             statusText.textContent = "Escaneando sector...";
@@ -215,7 +213,6 @@
             progressBar.style.transition = "width 8s linear";
             setTimeout(() => { progressBar.style.width = "100%"; }, 50);
 
-            // 2. A LOS 3 SEGUNDOS -> "Detectando..."
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text loading-dots";
                 statusText.style.color = "var(--primary-color)";
@@ -223,7 +220,6 @@
                 systemState.textContent = "ESTADO: OBJETIVO LOCALIZADO";
             }, 3000));
 
-            // 3. A LOS 5 SEGUNDOS -> "Midiendo..."
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text";
                 statusText.style.color = "var(--secondary-color)";
@@ -231,7 +227,6 @@
                 systemState.textContent = "ESTADO: ANÁLISIS ESPECTRAL";
             }, 5000));
 
-            // 4. A LOS 8 SEGUNDOS -> "Enviando Datos..."
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text";
                 statusText.style.color = "#ffcc00";
@@ -239,11 +234,10 @@
                 systemState.textContent = "ESTADO: TRANSMISIÓN SEGURO";
             }, 8000));
 
-            // 5. CIERRE (10.5s)
             timers.push(setTimeout(() => {
                 statusText.className = "";
                 statusText.style.color = "var(--primary-color)";
-                statusText.textContent = "¡Transmisión Completa! Toca de nuevo para reiniciar.";
+                statusText.textContent = "¡Transmisión Completa! Toca para reiniciar.";
                 systemState.textContent = "ESTADO: REPOSO";
                 progressContainer.style.display = "none";
                 progressBar.style.transition = "none";
