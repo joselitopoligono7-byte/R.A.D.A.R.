@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Táctico - Visor AR</title>
+    <title>Radar Táctico AR - Interactivo</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         :root {
             --bg-color: #050b14;
@@ -28,44 +29,13 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            overflow: hidden;
-            padding: 20px;
-            position: relative;
-        }
-
-        /* Vídeo de la cámara en tiempo real ocupando todo el fondo */
-        #camera-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -2;
-        }
-
-        /* Filtro translúcido estilo interfaz sobre la cámara */
-        .hud-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(0, 255, 102, 0.05) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(0, 255, 102, 0.05) 1px, transparent 1px);
-            background-size: 30px 30px;
-            z-index: -1;
-            pointer-events: none;
+            overflow-x: hidden;
+            padding: 15px;
         }
 
         header {
             text-align: center;
-            margin-top: 10px;
-            z-index: 2;
-            background: rgba(5, 11, 20, 0.7);
-            padding: 5px 15px;
-            border-radius: 6px;
-            border: 1px solid rgba(0, 255, 102, 0.2);
+            margin-top: 5px;
         }
 
         h1 {
@@ -81,78 +51,46 @@
             margin-top: 3px;
         }
 
-        /* Contenedor del Radar Interactivo */
-        .radar-container {
-            position: relative;
-            width: 240px;
-            height: 240px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
+        /* Contenedor Principal del Radar 3D */
+        .ar-viewer-container {
+            width: 100%;
+            max-width: 340px;
+            height: 320px;
             margin: auto 0;
-            z-index: 2;
-        }
-
-        .ring {
-            position: absolute;
-            border: 2px dashed rgba(0, 255, 102, 0.4);
-            border-radius: 50%;
-            animation: pulse-ring 4s infinite linear;
-        }
-        .ring:nth-child(1) { width: 100%; height: 100%; }
-        .ring:nth-child(2) { width: 75%; height: 75%; border-color: rgba(0, 191, 255, 0.4); animation-direction: reverse; animation-duration: 3s; }
-        .ring:nth-child(3) { width: 50%; height: 50%; border-style: solid; border-color: rgba(0, 255, 102, 0.3); }
-
-        .radar-btn {
             position: relative;
-            width: 85px;
-            height: 85px;
-            background: radial-gradient(circle, rgba(0,51,17,0.9) 0%, rgba(5,11,20,0.9) 80%);
-            border: 3px solid var(--primary-color);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
-            transition: all 0.3s ease;
-            z-index: 2;
+            border: 2px solid rgba(0, 255, 102, 0.4);
+            border-radius: 12px;
+            background: radial-gradient(circle, #002211 0%, #050b14 90%);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+            overflow: hidden;
+            cursor: pointer;
         }
 
-        .radar-btn svg {
-            width: 38px;
-            height: 38px;
-            fill: var(--primary-color);
-            transition: transform 0.3s ease;
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
         }
 
-        .scanner-line {
+        /* Botón AR nativo flotante en una esquina para pasar a Realidad Aumentada */
+        #ar-button {
+            background: var(--secondary-color);
+            color: #050b14;
+            border-radius: 20px;
+            border: none;
             position: absolute;
-            top: 50%; left: 50%;
-            width: 50%; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-color));
-            transform-origin: left center;
-            display: none;
-            z-index: 1;
+            bottom: 12px;
+            right: 12px;
+            padding: 8px 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 0.75rem;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+            cursor: pointer;
+            z-index: 10;
         }
 
-        .radar-container.active .scanner-line {
-            display: block;
-            animation: scan 2s infinite linear;
-        }
-
-        .radar-container.active .radar-btn {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 30px rgba(0, 191, 255, 0.8);
-            background: radial-gradient(circle, rgba(0,34,68,0.9) 0%, rgba(5,11,20,0.9) 80%);
-        }
-
-        .radar-container.active .radar-btn svg {
-            fill: var(--secondary-color);
-            transform: scale(1.1);
-        }
-
-        /* Panel de Terminal / Mensajes */
+        /* Panel de Terminal inferior */
         .terminal-panel {
             width: 100%;
             max-width: 340px;
@@ -162,9 +100,7 @@
             padding: 15px;
             text-align: center;
             box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.1);
-            margin-bottom: 20px;
-            z-index: 2;
-            backdrop-filter: blur(4px);
+            margin-bottom: 10px;
         }
 
         #status-text {
@@ -199,17 +135,6 @@
             transition: width 0.2s linear;
         }
 
-        @keyframes scan {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 0.3; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
         @keyframes dots {
             0% { content: ''; }
             25% { content: '.'; }
@@ -229,84 +154,68 @@
 </head>
 <body>
 
-    <!-- Elemento de vídeo donde se proyecta la cámara en directo -->
-    <video id="camera-bg" autoplay playsinline muted></video>
-    <div class="hud-overlay"></div>
-
     <header>
-        <h1>Visor Táctico HUD</h1>
-        <div class="status-bar" id="system-state">CÁMARA ACTIVA // EN ESPERA</div>
+        <h1>Radar Táctico AR</h1>
+        <div class="status-bar" id="system-state">SISTEMA EN ESPERA</div>
     </header>
 
-    <!-- Radar Interactivo -->
-    <div class="radar-container" id="radarTrigger" onclick="startRadarSequence()">
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="scanner-line"></div>
-        
-        <div class="radar-btn">
-            <svg viewBox="0 0 24 24">
-                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/>
-            </svg>
-        </div>
+    <!-- Visor 3D: Al hacer clic en él se activa la secuencia -->
+    <div class="ar-viewer-container" id="radarTrigger">
+        <model-viewer 
+            id="radarModel"
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+            ar 
+            ar-modes="webxr scene-viewer quick-look" 
+            camera-controls 
+            auto-rotate 
+            shadow-intensity="1">
+            <button slot="ar-button" id="ar-button">
+                📦 Ver en Realidad Aumentada
+            </button>
+        </model-viewer>
     </div>
 
-    <!-- Panel de Terminal -->
+    <!-- Panel de Terminal con los Mensajes -->
     <div class="terminal-panel">
-        <div id="status-text">Toca el radar para iniciar secuencia</div>
+        <div id="status-text" class="pulse-text">Toca el radar para activar</div>
         <div class="progress-bar-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
         </div>
     </div>
 
     <script>
-        // Inicializar la cámara trasera al cargar la página
-        async function initCamera() {
-            try {
-                const videoElement = document.getElementById('camera-bg');
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: "environment" } } // Intenta usar la cámara trasera
-                });
-                videoElement.srcObject = stream;
-            } catch (err) {
-                // Si la cámara trasera estricta falla por permisos o compatibilidad, usa cualquier cámara disponible
-                try {
-                    const videoElement = document.getElementById('camera-bg');
-                    const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = fallbackStream;
-                } catch (e) {
-                    console.error("No se pudo acceder a la cámara:", e);
-                    document.getElementById('system-state').textContent = "ERROR: ACCESO A CÁMARA DENEGADO";
-                }
-            }
-        }
-
-        // Arrancar cámara al cargar
-        window.addEventListener('load', initCamera);
-
         let isRunning = false;
         let timers = [];
+
+        // Vincular el toque en el visor 3D para activar la secuencia
+        document.getElementById('radarTrigger').addEventListener('click', function(e) {
+            // Evitamos que salte si hacen clic específicamente en el botón pequeño de RA de la esquina
+            if (e.target.id === 'ar-button') return;
+            startRadarSequence();
+        });
 
         function startRadarSequence() {
             if (isRunning) return;
             isRunning = true;
 
-            const container = document.getElementById('radarTrigger');
             const statusText = document.getElementById('status-text');
             const systemState = document.getElementById('system-state');
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
 
-            container.classList.add('active');
-            systemState.textContent = "ESTADO: ESCANEANDO EN DIRECTO";
+            // 1. INICIO (0s)
+            statusText.className = "pulse-text";
+            statusText.style.color = "var(--secondary-color)";
+            statusText.textContent = "Escaneando sector...";
+            systemState.textContent = "ESTADO: ESCANEANDO";
             systemState.style.color = "var(--secondary-color)";
+            
             progressContainer.style.display = "block";
             progressBar.style.width = "0%";
-            
             progressBar.style.transition = "width 8s linear";
             setTimeout(() => { progressBar.style.width = "100%"; }, 50);
 
+            // 2. A LOS 3 SEGUNDOS -> "Detectando..."
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text loading-dots";
                 statusText.style.color = "var(--primary-color)";
@@ -314,6 +223,7 @@
                 systemState.textContent = "ESTADO: OBJETIVO LOCALIZADO";
             }, 3000));
 
+            // 3. A LOS 5 SEGUNDOS -> "Midiendo..."
             timers.push(setTimeout(() => {
                 statusText.className = "pulse-text";
                 statusText.style.color = "var(--secondary-color)";
@@ -321,18 +231,20 @@
                 systemState.textContent = "ESTADO: ANÁLISIS ESPECTRAL";
             }, 5000));
 
+            // 4. A LOS 8 SEGUNDOS -> "Enviando Datos..."
             timers.push(setTimeout(() => {
+                statusText.className = "pulse-text";
                 statusText.style.color = "#ffcc00";
                 statusText.textContent = "Enviando Datos...";
                 systemState.textContent = "ESTADO: TRANSMISIÓN SEGURO";
             }, 8000));
 
+            // 5. CIERRE (10.5s)
             timers.push(setTimeout(() => {
-                container.classList.remove('active');
                 statusText.className = "";
                 statusText.style.color = "var(--primary-color)";
-                statusText.textContent = "¡Transmisión Completa! Toca para reiniciar.";
-                systemState.textContent = "ESTADO: CÁMARA ACTIVA // REPOSO";
+                statusText.textContent = "¡Transmisión Completa! Toca de nuevo para reiniciar.";
+                systemState.textContent = "ESTADO: REPOSO";
                 progressContainer.style.display = "none";
                 progressBar.style.transition = "none";
                 progressBar.style.width = "0%";
